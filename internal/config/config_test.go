@@ -34,6 +34,20 @@ func TestLoadFromEnvAndFiles(t *testing.T) {
 	}
 }
 
+func TestTokenFileResolvedAbsolute(t *testing.T) {
+	t.Setenv("INOREADER_TOKEN_FILE", "tokens.json")
+	c, err := Load("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !filepath.IsAbs(c.TokenFile) || filepath.Base(c.TokenFile) != "tokens.json" {
+		t.Errorf("token file not resolved: %q", c.TokenFile)
+	}
+	if w := (&Config{TokenFile: "/data/tokens.json"}).TokenFileWarning(); w != "" && !InContainer() {
+		t.Errorf("unexpected warning: %s", w)
+	}
+}
+
 func TestValidateMissing(t *testing.T) {
 	t.Setenv("INOREADER_CLIENT_ID", "")
 	t.Setenv("INOREADER_CLIENT_SECRET", "")

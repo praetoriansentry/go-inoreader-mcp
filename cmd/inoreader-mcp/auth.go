@@ -71,6 +71,9 @@ func cmdAuthLogin(args []string) error {
 	}
 	fmt.Fprintf(os.Stderr, "Authorized. Scope %q, access token valid until %s.\nTokens saved to %s\n",
 		tok.Scope, time.Unix(tok.ExpiresAt, 0).Format(time.RFC1123), cfg.TokenFile)
+	if w := cfg.TokenFileWarning(); w != "" {
+		fmt.Fprintln(os.Stderr, "WARNING:", w)
+	}
 	return nil
 }
 
@@ -190,8 +193,15 @@ func cmdAuthStatus(args []string) error {
 	}
 	tok := ts.Current()
 	fmt.Println("token file:   ", cfg.TokenFile)
+	if w := cfg.TokenFileWarning(); w != "" {
+		fmt.Println("warning:      ", w)
+	}
 	if tok == nil {
-		fmt.Println("status:        not authenticated (run `inoreader-mcp auth login`)")
+		if _, err := os.Stat(cfg.TokenFile); err != nil {
+			fmt.Println("status:        not authenticated; token file does not exist (run `inoreader-mcp auth login`)")
+		} else {
+			fmt.Println("status:        not authenticated; token file has no usable token (run `inoreader-mcp auth login`)")
+		}
 		return nil
 	}
 	fmt.Println("scope:        ", tok.Scope)

@@ -54,6 +54,17 @@ docker run -it --rm --env-file .env -v inoreader-data:/data inoreader-mcp auth l
 `auth login` prints a URL; approve the app in your browser. `auth status`
 shows the token state without using API quota.
 
+If your app's registered redirect URI is not `http://localhost...` (for
+example the public domain from the section below), `auth login` falls back
+to manual mode automatically: paste the URL your browser lands on, even if
+that page shows a 404.
+
+In Docker, keep `INOREADER_TOKEN_FILE` unset or under `/data`. The image
+defaults to `/data/tokens.json`; a value like `tokens.json` in `.env` would
+override it with a path inside the throwaway container filesystem, and the
+login would appear to succeed but not persist. The server warns when it
+detects this.
+
 ### 4. Connect a client
 
 **Claude Code** (stdio, native binary):

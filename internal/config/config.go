@@ -74,7 +74,28 @@ func Load(version string) (*Config, error) {
 			return nil, err
 		}
 	}
+	// A relative path depends on the working directory, which inside a
+	// container is ephemeral. Resolve it so every message shows where the
+	// token really lives.
+	if c.TokenFile, err = filepath.Abs(c.TokenFile); err != nil {
+		return nil, fmt.Errorf("INOREADER_TOKEN_FILE: %w", err)
+	}
 	return c, nil
+}
+
+// InContainer reports whether the process appears to run inside Docker.
+func InContainer() bool {
+	_, err := os.Stat("/.dockerenv")
+	return err == nil
+}
+
+// TokenFileWarning returns advice when the token file is unlikely to persist,
+// or "" when it looks fine.
+func (c *Config) TokenFileWarning() string {
+	if InContainer() && !strings.HasPrefix(c.TokenFile, "/data/") {
+		return fmt.Sprintf("token file %s is outside /data; it will be lost when the container exits unless that path is on a mounted volume. Set INOREADER_TOKEN_FILE=/data/tokens.json (the image default) or remove the override.", c.TokenFile)
+	}
+	return ""
 }
 
 // Validate checks that credentials needed to talk to Inoreader are present.

@@ -180,6 +180,9 @@ func cmdServe(args []string) error {
 	if client.Tokens().Current() == nil {
 		logger.Warn("no saved token; run `inoreader-mcp auth login` first. Tools will fail until then.", "token_file", cfg.TokenFile)
 	}
+	if w := cfg.TokenFileWarning(); w != "" {
+		logger.Warn(w)
+	}
 	server := mcpserver.New(client, mcpserver.Options{ReadOnly: cfg.ReadOnly, Version: resolvedVersion(), Logger: logger})
 
 	ctx, stop := signalContext()
