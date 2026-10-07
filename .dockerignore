@@ -1,0 +1,12 @@
+.git
+.github
+.env
+.env.*
+tokens.json
+config.json
+data/
+bin/
+dist/
+*.md
+!README.md
+coverage.*

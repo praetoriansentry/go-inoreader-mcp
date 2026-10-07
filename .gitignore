@@ -1,0 +1,25 @@
+# Secrets - never commit
+.env
+.env.*
+!.env.example
+tokens.json
+*.tokens.json
+config.json
+*.pem
+*.key
+data/
+
+# Build output
+/bin/
+/dist/
+/inoreader-mcp
+coverage.out
+coverage.html
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
