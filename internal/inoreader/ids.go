@@ -43,7 +43,7 @@ func ShortID(id string) (string, error) {
 		return "", fmt.Errorf("invalid long article id %q: %w", id, err)
 	}
 	// The short form is a signed base-10 number of the same 64 bits.
-	return strconv.FormatInt(int64(u), 10), nil
+	return strconv.FormatInt(int64(u), 10), nil //nolint:gosec // intentional two's-complement reinterpretation
 }
 
 // LongID converts an article ID in either form to the long
@@ -61,7 +61,7 @@ func LongID(id string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("invalid article id %q", id)
 	}
-	return fmt.Sprintf("%s%016x", LongIDPrefix, uint64(n)), nil
+	return fmt.Sprintf("%s%016x", LongIDPrefix, uint64(n)), nil //nolint:gosec // intentional two's-complement reinterpretation
 }
 
 // LabelStream returns the stream ID for a user folder/tag name. Names that

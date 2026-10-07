@@ -219,7 +219,7 @@ func (c *Client) roundTrip(ctx context.Context, method, endpoint string, q, form
 	if err != nil {
 		return nil, 0, fmt.Errorf("inoreader %s: %w", endpoint, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	c.updateRate(resp.Header)
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes))
 	if err != nil {

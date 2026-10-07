@@ -2,6 +2,8 @@ module github.com/praetoriansentry/go-inoreader-mcp
 
 go 1.26
 
+toolchain go1.26.8
+
 require github.com/modelcontextprotocol/go-sdk v1.8.0
 
 require (

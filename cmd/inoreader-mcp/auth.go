@@ -93,11 +93,11 @@ func waitForCallback(ctx context.Context, redirectURI, state string, timeout tim
 	}
 	// Listen on all interfaces of the chosen port so the flow also works when
 	// the port is published from a container; the browser still targets localhost.
-	ln, err := net.Listen("tcp", ":"+port)
+	ln, err := (&net.ListenConfig{}).Listen(ctx, "tcp", ":"+port)
 	if err != nil {
 		return "", err
 	}
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	type result struct {
 		code string

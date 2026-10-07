@@ -151,7 +151,7 @@ func envOrFile(key string) (string, error) {
 	if path == "" {
 		return "", nil
 	}
-	b, err := os.ReadFile(path)
+	b, err := os.ReadFile(path) //nolint:gosec // path is operator-supplied via *_FILE env, by design
 	if err != nil {
 		return "", fmt.Errorf("%s_FILE: %w", key, err)
 	}

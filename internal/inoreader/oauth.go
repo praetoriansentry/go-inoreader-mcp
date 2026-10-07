@@ -20,7 +20,7 @@ import (
 // OAuth endpoints documented at https://www.inoreader.com/developers/oauth.
 const (
 	DefaultAuthURL  = "https://www.inoreader.com/oauth2/auth"
-	DefaultTokenURL = "https://www.inoreader.com/oauth2/token"
+	DefaultTokenURL = "https://www.inoreader.com/oauth2/token" //nolint:gosec // endpoint URL, not a credential
 
 	// ScopeRead grants read-only access; ScopeReadWrite also allows edits.
 	ScopeRead      = "read"
@@ -165,7 +165,7 @@ func (c *OAuthConfig) tokenRequest(ctx context.Context, form url.Values, prevRef
 	if err != nil {
 		return nil, fmt.Errorf("oauth token request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		return nil, fmt.Errorf("oauth token response: %w", err)
@@ -249,7 +249,7 @@ func (s FileTokenStore) Save(t *Token) error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
-	b, err := json.MarshalIndent(t, "", "  ")
+	b, err := json.MarshalIndent(t, "", "  ") //nolint:gosec // persisting the token is this store's purpose; file is 0600
 	if err != nil {
 		return err
 	}
@@ -258,29 +258,25 @@ func (s FileTokenStore) Save(t *Token) error {
 		return err
 	}
 	tmpName := tmp.Name()
-	cleanup := func() { _ = os.Remove(tmpName) }
-	if err := tmp.Chmod(0o600); err != nil {
-		tmp.Close()
-		cleanup()
+	fail := func(err error) error {
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
 		return err
+	}
+	if err := tmp.Chmod(0o600); err != nil {
+		return fail(err)
 	}
 	if _, err := tmp.Write(append(b, '\n')); err != nil {
-		tmp.Close()
-		cleanup()
-		return err
+		return fail(err)
 	}
 	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		cleanup()
-		return err
+		return fail(err)
 	}
 	if err := tmp.Close(); err != nil {
-		cleanup()
-		return err
+		return fail(err)
 	}
 	if err := os.Rename(tmpName, s.Path); err != nil {
-		cleanup()
-		return err
+		return fail(err)
 	}
 	return nil
 }
