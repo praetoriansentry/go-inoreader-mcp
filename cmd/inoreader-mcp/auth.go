@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/praetoriansentry/go-inoreader-mcp/internal/config"
 	"github.com/praetoriansentry/go-inoreader-mcp/internal/inoreader"
 )
 
@@ -27,6 +28,16 @@ func cmdAuthLogin(args []string) error {
 	cfg, err := loadConfig()
 	if err != nil {
 		return err
+	}
+	// Fail before the browser round trip if the token cannot be saved.
+	if err := (inoreader.FileTokenStore{Path: cfg.TokenFile}).CheckWritable(); err != nil {
+		if config.InContainer() {
+			return fmt.Errorf("%w\nInside Docker this usually means the /data volume is owned by root. Fix it with:\n  docker run --rm -v <volume>:/data alpine chown 65532:65532 /data\nor recreate the volume with an image built from this version or later", err)
+		}
+		return err
+	}
+	if w := cfg.TokenFileWarning(); w != "" {
+		fmt.Fprintln(os.Stderr, "WARNING:", w)
 	}
 	oc := oauthConfig(cfg)
 	state, err := inoreader.NewState()

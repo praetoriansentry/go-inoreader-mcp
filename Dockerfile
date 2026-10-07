@@ -15,7 +15,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
       -ldflags="-s -w -X main.version=${VERSION}" \
-      -o /out/inoreader-mcp ./cmd/inoreader-mcp
+      -o /out/inoreader-mcp ./cmd/inoreader-mcp \
+ && mkdir -p /out/data
 
 # ---- runtime stage ---------------------------------------------------------
 # Distroless static: no shell, no package manager, CA certs included,
@@ -30,6 +31,9 @@ LABEL org.opencontainers.image.title="inoreader-mcp" \
 COPY --from=build /out/inoreader-mcp /inoreader-mcp
 
 # Token persistence lives here; mount a volume so refreshed tokens survive.
+# The directory is created owned by nonroot so that a fresh named volume
+# inherits writable ownership (Docker copies ownership from the image path).
+COPY --from=build --chown=nonroot:nonroot /out/data /data
 ENV INOREADER_TOKEN_FILE=/data/tokens.json
 VOLUME ["/data"]
 

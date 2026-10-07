@@ -281,6 +281,24 @@ func (s FileTokenStore) Save(t *Token) error {
 	return nil
 }
 
+// CheckWritable verifies that the token file can be created or replaced,
+// creating its directory if needed. It is meant to run before an interactive
+// login so permission problems surface early.
+func (s FileTokenStore) CheckWritable() error {
+	dir := filepath.Dir(s.Path)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return fmt.Errorf("token directory %s: %w", dir, err)
+	}
+	tmp, err := os.CreateTemp(dir, ".tokens-probe-*")
+	if err != nil {
+		return fmt.Errorf("token directory %s is not writable: %w", dir, err)
+	}
+	name := tmp.Name()
+	_ = tmp.Close()
+	_ = os.Remove(name)
+	return nil
+}
+
 // MemoryTokenStore keeps the token in memory only.
 type MemoryTokenStore struct {
 	mu  sync.Mutex

@@ -65,6 +65,13 @@ override it with a path inside the throwaway container filesystem, and the
 login would appear to succeed but not persist. The server warns when it
 detects this.
 
+If `auth login` reports `token directory /data is not writable`, the volume
+was created root-owned by an older image. Fix it in place:
+
+```sh
+docker run --rm -v inoreader-data:/data alpine chown 65532:65532 /data
+```
+
 ### 4. Connect a client
 
 **Claude Code** (stdio, native binary):

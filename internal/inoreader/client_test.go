@@ -381,6 +381,23 @@ func TestExchangeAndAuthURL(t *testing.T) {
 	}
 }
 
+func TestFileTokenStoreCheckWritable(t *testing.T) {
+	dir := t.TempDir()
+	if err := (FileTokenStore{Path: filepath.Join(dir, "sub", "tokens.json")}).CheckWritable(); err != nil {
+		t.Errorf("writable dir: %v", err)
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("root can write anywhere")
+	}
+	ro := filepath.Join(dir, "ro")
+	if err := os.Mkdir(ro, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	if err := (FileTokenStore{Path: filepath.Join(ro, "tokens.json")}).CheckWritable(); err == nil || !strings.Contains(err.Error(), "not writable") {
+		t.Errorf("read-only dir should fail: %v", err)
+	}
+}
+
 func TestFileTokenStoreMissing(t *testing.T) {
 	_, err := FileTokenStore{Path: filepath.Join(t.TempDir(), "nope.json")}.Load()
 	if !errors.Is(err, ErrNoToken) {
