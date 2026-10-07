@@ -11,9 +11,9 @@ import (
 const briefingTemplate = `You are my chief of staff for information. Triage my Inoreader feed from the last %s and surface only what deserves attention.
 
 Steps:
-1. Call scan_recent_articles with hours=%s%s (keep summary_chars around 300; raise max_pages only if "truncated" is true and quota allows).
+1. Call scan_recent_articles with hours=%s%s and titles_only=true (raise max_pages only if "truncated" is true and quota allows).
 2. First pass: skim every title and feed. Pick 30-50 candidates that look relevant%s.
-3. Second pass: judge each candidate on relevance, signal quality (not recycled takes or PR), timeliness, and depth. If a summary is too thin to judge, call get_articles for those IDs with summary_chars=4000.
+3. Second pass: call get_articles with the candidate IDs (up to 100 per call) and summary_chars=1500, then judge each on relevance, signal quality (not recycled takes or PR), timeliness, and depth.
 4. Select 10-30 that clear the bar. Fewer, better picks beat a padded list. Drop duplicate coverage (keep the best source), paywalled stubs, and engagement bait.
 5. Include exactly one wildcard: something outside my usual interests that might genuinely pique curiosity.
 6. Rank by what I would most regret missing.

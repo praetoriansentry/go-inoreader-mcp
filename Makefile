@@ -4,7 +4,7 @@ VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev
 IMAGE    ?= ghcr.io/praetoriansentry/go-inoreader-mcp
 LDFLAGS  := -s -w -X main.version=$(VERSION)
 
-.PHONY: all build test lint vet fmt cover docker docker-run clean tidy vuln check
+.PHONY: all build test lint vet fmt cover docker docker-run clean tidy vuln check hooks
 
 all: check build
 
@@ -40,6 +40,9 @@ docker:
 # Interactive stdio session for a quick manual check.
 docker-run: docker
 	docker run -i --rm --env-file .env -v inoreader-data:/data $(IMAGE):latest serve
+
+hooks:
+	git config core.hooksPath .githooks
 
 clean:
 	rm -rf bin coverage.out

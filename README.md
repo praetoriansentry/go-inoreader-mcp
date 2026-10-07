@@ -102,7 +102,7 @@ Read tools (Inoreader "Zone 1" quota):
 | `get_stream_contents` | One page (≤100) of a feed/folder/tag/system stream with time, unread, starred filters and pagination. |
 | `get_item_ids` | Up to 1000 article IDs from a stream without content. |
 | `get_articles` | Full content for specific IDs; raise `summary_chars` to read whole articles. |
-| `scan_recent_articles` | Everything in a time window across the reading list or a folder, auto-paged, with plain-text summaries and feed counts. |
+| `scan_recent_articles` | Everything in a time window across the reading list or a folder, auto-paged, with plain-text summaries and feed counts. `titles_only` returns just headlines for cheap triage. |
 | `get_stream_preferences` | Raw ordering preferences. |
 
 Write tools (Zone 2 quota; absent in read-only mode; need a `read write` token):
@@ -134,13 +134,16 @@ short decimal form. Stream IDs follow Inoreader conventions; the
 
 ## Automating a daily summary
 
-Example with Claude Code, scheduled by cron or a
-[routine](https://docs.claude.com/en/docs/claude-code):
+`examples/daily-summary.sh` runs Claude Code headlessly with the
+`daily_briefing` prompt and writes a dated Markdown file; `examples/feed-alert.sh`
+reports topic matches for a notifier. Both are cron-friendly. Client
+configuration samples for Claude Desktop (stdio via Docker) and Claude Code
+(streamable HTTP) are in `examples/` too.
 
 ```sh
-claude -p "Use the inoreader daily_briefing prompt with hours=24 and the
-interest profile in INTERESTS.md. Write the result to summary.md." \
-  --allowedTools "mcp__inoreader__*,Read,Write"
+claude mcp add inoreader -- env $(cat .env | xargs) inoreader-mcp serve --read-only
+HOURS=24 ./examples/daily-summary.sh
+TOPICS="eBPF,Go runtime" ./examples/feed-alert.sh
 ```
 
 Quota matters: free Inoreader plans allow roughly 100 read requests per day.
@@ -174,6 +177,7 @@ make check      # gofmt, vet, race tests
 make build      # bin/inoreader-mcp
 make docker     # local image
 make vuln       # govulncheck
+make hooks      # install the pre-commit secret guard (.githooks/pre-commit)
 ```
 
 Tests run against an in-process fake of the Inoreader API and an in-memory

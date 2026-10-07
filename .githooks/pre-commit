@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Blocks commits that stage secret files or obvious credential patterns.
+# Install with: make hooks   (sets core.hooksPath to .githooks)
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$staged" ] && exit 0
+
+fail=0
+for f in $staged; do
+  case "$f" in
+    .env|.env.*|*/tokens.json|tokens.json|config.json|*.pem|*.key)
+      [ "$f" = ".env.example" ] && continue
+      echo "pre-commit: refusing to commit secret file: $f" >&2; fail=1 ;;
+  esac
+done
+
+# Look for filled-in credential assignments or bearer tokens in added lines.
+if git diff --cached -U0 -- $staged | grep -E '^\+' | grep -Ev '^\+\+\+' | \
+   grep -Eiq '(INOREADER_(CLIENT_SECRET|REFRESH_TOKEN|MCP_HTTP_TOKEN)\s*=\s*[A-Za-z0-9_\-]{16,}|"(access_token|refresh_token|client_secret)"\s*:\s*"[A-Za-z0-9_\-]{16,}"|Authorization:\s*Bearer\s+[A-Za-z0-9_\-]{20,})'; then
+  echo "pre-commit: staged diff contains what looks like a credential" >&2
+  fail=1
+fi
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact --no-banner || fail=1
+fi
+
+exit $fail

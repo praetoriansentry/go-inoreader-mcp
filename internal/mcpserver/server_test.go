@@ -299,6 +299,14 @@ func TestScanRecent(t *testing.T) {
 	if out["count"].(float64) != 1 || out["truncated"] != true {
 		t.Errorf("max_items: %v", out)
 	}
+	out = f.mustOK("scan_recent_articles", map[string]any{"since": "2023-11-14T22:00:00Z", "titles_only": true})
+	it := out["items"].([]any)[0].(map[string]any)
+	if _, has := it["summary"]; has || it["title"] != "One" || it["url"] == "" {
+		t.Errorf("titles_only: %v", it)
+	}
+	if _, has := it["folders"]; has {
+		t.Errorf("titles_only should drop folders: %v", it)
+	}
 	// Default window is 24h: items from 2023 are dropped client-side.
 	out = f.mustOK("scan_recent_articles", nil)
 	if out["count"].(float64) != 0 {
@@ -365,7 +373,7 @@ func TestPromptsAndResources(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := p.Messages[0].Content.(*mcp.TextContent).Text
-	for _, want := range []string{"hours=48", `stream_id="user/-/label/Tech"`, "unread_only=true", "Go, eBPF", "scan_recent_articles"} {
+	for _, want := range []string{"hours=48", `stream_id="user/-/label/Tech"`, "unread_only=true", "Go, eBPF", "scan_recent_articles", "titles_only=true", "get_articles"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("briefing prompt missing %q", want)
 		}

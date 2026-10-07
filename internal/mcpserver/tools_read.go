@@ -364,6 +364,7 @@ type scanInput struct {
 	MaxItems     int      `json:"max_items,omitempty" jsonschema:"Stop after this many articles (default 300, max 1000)"`
 	MaxPages     int      `json:"max_pages,omitempty" jsonschema:"Max API requests to spend; each returns up to 100 articles (default 5, max 20)"`
 	SummaryChars int      `json:"summary_chars,omitempty" jsonschema:"Max characters of plain-text summary per article (default 300, -1 to omit)"`
+	TitlesOnly   bool     `json:"titles_only,omitempty" jsonschema:"Return only id, title, feed, url, published, read, starred per article: the cheapest way to triage a large window by headline, then fetch candidates with get_articles"`
 	Folders      []string `json:"folders,omitempty" jsonschema:"Client-side filter: keep only articles in any of these folder names"`
 	ExcludeFeeds []string `json:"exclude_feeds,omitempty" jsonschema:"Client-side filter: drop articles whose feed title or stream ID contains any of these substrings (case-insensitive)"`
 	AISummaries  bool     `json:"ai_summaries,omitempty"`
@@ -434,6 +435,9 @@ func (s *Server) scanRecent(ctx context.Context, _ *mcp.CallToolRequest, in scan
 			continue
 		}
 		a := toArticle(it, summaryChars(chars), false)
+		if in.TitlesOnly {
+			a = Article{ID: a.ID, ShortID: a.ShortID, Title: a.Title, Feed: a.Feed, URL: a.URL, Published: a.Published, Read: a.Read, Starred: a.Starred}
+		}
 		out.Items = append(out.Items, a)
 		counts[a.Feed]++
 	}
