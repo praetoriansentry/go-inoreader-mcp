@@ -40,7 +40,6 @@ Native binary:
 go install github.com/praetoriansentry/go-inoreader-mcp/cmd/inoreader-mcp@latest
 set -a; . ./.env; set +a
 inoreader-mcp auth login            # opens a local callback on :8080
-inoreader-mcp auth login --scope read   # read-only token
 ```
 
 Docker (tokens persist in the `inoreader-data` volume):
@@ -105,7 +104,7 @@ Read tools (Inoreader "Zone 1" quota):
 | `scan_recent_articles` | Everything in a time window across the reading list or a folder, auto-paged, with plain-text summaries and feed counts. `titles_only` returns just headlines for cheap triage. |
 | `get_stream_preferences` | Raw ordering preferences. |
 
-Write tools (Zone 2 quota; absent in read-only mode; need a `read write` token):
+Write tools (Zone 2 quota; absent in read-only mode; the Inoreader app must be registered with read/write permission):
 
 | Tool | Purpose |
 |------|---------|

@@ -20,7 +20,7 @@ type statusOutput struct {
 	Version       string     `json:"version"`
 	ReadOnly      bool       `json:"read_only" jsonschema:"True when write tools are disabled"`
 	Authenticated bool       `json:"authenticated"`
-	Scope         string     `json:"scope,omitempty" jsonschema:"OAuth scope of the stored token (read or read write)"`
+	Scope         string     `json:"scope,omitempty" jsonschema:"Scope string recorded when the token was issued. Inoreader applies the app's current permission level, so writes may succeed even when this says read"`
 	TokenExpires  string     `json:"token_expires,omitempty"`
 	RateLimit     *RateLimit `json:"rate_limit,omitempty" jsonschema:"Quota as of the last API response, nil if no request made yet"`
 }

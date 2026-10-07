@@ -27,8 +27,10 @@ issue.
   removes every tool that modifies the account. Destructive tools
   (`mark_all_as_read`, `unsubscribe_feed`, `delete_folder_or_tag`) also
   require `confirm: true`.
-- **Least-privilege OAuth.** `auth login --scope read` requests a read-only
-  token; write tools then fail server-side with `403` even if enabled.
+- **Least-privilege OAuth.** Register the Inoreader app as "Read only" if you
+  never want writes; Inoreader enforces the app's permission level on every
+  request regardless of the scope string stored with the token. Pair that
+  with read-only mode on the server for defense in depth.
 - **Container hardening.** Static binary on `distroless/static:nonroot`
   (no shell, uid 65532), `read_only` root filesystem, all capabilities
   dropped, `no-new-privileges`, memory and pid limits in `docker-compose.yml`.

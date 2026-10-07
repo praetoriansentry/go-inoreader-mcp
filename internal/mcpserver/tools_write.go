@@ -223,7 +223,7 @@ func (s *Server) setOrdering(ctx context.Context, _ *mcp.CallToolRequest, in ord
 }
 
 func (s *Server) registerWriteTools(srv *mcp.Server) {
-	const zone2 = " (Zone 2 quota; requires a token with the write scope)"
+	const zone2 = " (Zone 2 quota; the Inoreader app must have read/write permission)"
 	mcp.AddTool(srv, writeTool("mark_items_read", "Mark read",
 		"Mark the given articles as read."+zone2, false), s.itemsOp("mark_items_read", s.client.MarkRead))
 	mcp.AddTool(srv, writeTool("mark_items_unread", "Mark unread",
