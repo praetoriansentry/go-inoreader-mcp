@@ -1,0 +1,59 @@
+# Public deployment: Caddy terminates TLS (automatic Let's Encrypt
+# certificates) and proxies to the MCP server on a private Docker network.
+# The MCP server publishes no host ports at all.
+#
+#   cp ../../.env.example .env            # fill in client id/secret
+#   echo "INOREADER_MCP_HTTP_TOKEN=$(openssl rand -hex 32)" >> .env
+#   echo "MCP_DOMAIN=mcp.example.com" >> .env
+#   docker compose run --rm -p 8080:8080 inoreader-mcp auth login   # once
+#   docker compose up -d
+#
+# DNS for MCP_DOMAIN must point at this host, and ports 80/443 must be
+# reachable from the internet for certificate issuance.
+services:
+  inoreader-mcp:
+    image: ghcr.io/praetoriansentry/go-inoreader-mcp:${VERSION:-latest}
+    env_file: .env
+    environment:
+      INOREADER_MCP_HTTP_ADDR: 0.0.0.0:8765
+      INOREADER_TOKEN_FILE: /data/tokens.json
+      # Uncomment to expose only read tools to the internet-facing endpoint.
+      # INOREADER_MCP_READ_ONLY: "true"
+    command: ["serve"]
+    volumes:
+      - inoreader-data:/data
+    networks: [internal]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    pids_limit: 64
+
+  caddy:
+    image: caddy:2-alpine
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [internal]
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt:
+      - no-new-privileges:true
+    depends_on: [inoreader-mcp]
+
+networks:
+  internal:
+
+volumes:
+  inoreader-data:
+  caddy-data:
+  caddy-config:

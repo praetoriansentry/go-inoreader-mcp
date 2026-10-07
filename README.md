@@ -87,6 +87,44 @@ claude mcp add --transport http inoreader http://127.0.0.1:8765/mcp \
 
 The server refuses to bind a non-loopback address without a bearer token.
 
+### Exposing it to Claude on the web
+
+Claude.ai custom connectors need a public HTTPS URL and can send a fixed
+`Authorization` header on every request. Never expose the plain-HTTP
+listener directly: the bearer token would travel in clear text, and that
+token is full access to your Inoreader account through the tools.
+
+`examples/public/` has a compose file where [Caddy](https://caddyserver.com)
+terminates TLS with automatic certificates and proxies to the server over a
+private Docker network (the server publishes no host ports):
+
+```sh
+cd examples/public
+cp ../../.env.example .env                       # client id/secret
+echo "INOREADER_MCP_HTTP_TOKEN=$(openssl rand -hex 32)" >> .env
+echo "MCP_DOMAIN=mcp.example.com" >> .env        # DNS must point here
+docker compose run --rm -p 8080:8080 inoreader-mcp auth login
+docker compose up -d
+curl https://mcp.example.com/healthz             # ok
+```
+
+Then in Claude.ai: *Customize → Connectors → Add custom connector*, URL
+`https://mcp.example.com/mcp`, authentication *No sign in*, and under
+*Request headers* add `Authorization: Bearer <your INOREADER_MCP_HTTP_TOKEN>`.
+
+Hardening checklist for a public endpoint:
+
+- Treat the bearer token like a password: 32+ random bytes, rotate by
+  changing `.env` and restarting, never paste it into chats or issues.
+- Consider `INOREADER_MCP_READ_ONLY=true` for the internet-facing instance
+  if briefings are all you need; run writes locally over stdio.
+- Keep the Docker volume with `tokens.json` private; anyone with it owns your
+  Inoreader session until you revoke the app in Inoreader's settings.
+- The `/healthz` endpoint is unauthenticated and returns only `ok`.
+- If you put your own reverse proxy on the same host instead, the server
+  disables the SDK's localhost Host-header check whenever a bearer token is
+  set, so forwarding the public `Host` header works.
+
 ## Tools
 
 Read tools (Inoreader "Zone 1" quota):

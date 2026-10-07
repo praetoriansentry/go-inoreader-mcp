@@ -1,0 +1,35 @@
+# Set MCP_DOMAIN in .env. Caddy obtains and renews certificates itself.
+{$MCP_DOMAIN} {
+	encode zstd gzip
+
+	# Only the MCP endpoint and the health check are reachable.
+	@mcp path /mcp /mcp/*
+	handle @mcp {
+		reverse_proxy inoreader-mcp:8765 {
+			# Streamable HTTP uses long-lived SSE responses.
+			flush_interval -1
+			transport http {
+				read_timeout 0
+			}
+		}
+	}
+
+	handle /healthz {
+		reverse_proxy inoreader-mcp:8765
+	}
+
+	handle {
+		respond 404
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		-Server
+	}
+
+	log {
+		output stderr
+		format console
+	}
+}

@@ -196,6 +196,13 @@ func serveHTTP(ctx context.Context, cfg *config.Config, server *mcp.Server, logg
 	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return server }, &mcp.StreamableHTTPOptions{
 		Logger:         logger,
 		SessionTimeout: 30 * time.Minute,
+		// The SDK rejects loopback-sourced requests whose Host header is not
+		// localhost, to defeat DNS rebinding from a browser. A reverse proxy on
+		// the same host forwards the public Host header and would be blocked.
+		// Browsers cannot attach an Authorization header cross-origin, so the
+		// bearer token already closes the rebinding hole; keep the SDK check
+		// only for tokenless (loopback-only) listeners.
+		DisableLocalhostProtection: cfg.HTTPToken != "",
 	})
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
